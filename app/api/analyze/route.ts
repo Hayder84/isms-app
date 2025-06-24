@@ -2,21 +2,40 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
-  const file = formData.get('file') as File;
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
 
-  // Simulated analysis
-  const mockAnalysis = {
-    fileName: file.name,
-    missingControls: ['A.12.1.2', 'A.14.2.5'],
-    recommendations: 'Implement access control policies to meet A.12.1.2...',
-  };
+    if (!file) {
+      return NextResponse.json(
+        { error: "No file provided" },
+        { status: 400 }
+      );
+    }
 
-  // Save to Supabase
-  await supabase.from('documents').insert({
-    file_name: file.name,
-    analysis: mockAnalysis,
-  });
+    // Simulated analysis
+    const mockAnalysis = {
+      fileName: file.name,
+      missingControls: ['A.12.1.2', 'A.14.2.5'],
+      recommendations: 'Implement access control policies...',
+    };
 
-  return NextResponse.json(mockAnalysis);
+    // Save to Supabase
+    const { error } = await supabase
+      .from('documents')
+      .insert({
+        file_name: file.name,
+        analysis: mockAnalysis,
+      });
+
+    if (error) throw error;
+
+    return NextResponse.json(mockAnalysis);
+    
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }
